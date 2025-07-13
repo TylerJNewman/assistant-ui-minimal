@@ -15,6 +15,9 @@ import {
   PencilIcon,
   RefreshCwIcon,
   SendHorizontalIcon,
+  SearchIcon,
+  PaperclipIcon,
+  ChevronDownIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -74,7 +77,8 @@ const ThreadWelcome: FC = () => {
     <ThreadPrimitive.Empty>
       <div className="flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
         <div className="flex w-full flex-grow flex-col items-center justify-center">
-          <p className="mt-4 font-medium">How can I help you today?</p>
+          <p className="mt-4 text-4xl font-medium text-center">How can I help you, Tyler?</p>
+          <ThreadWelcomeActions />
         </div>
         <ThreadWelcomeSuggestions />
       </div>
@@ -82,28 +86,63 @@ const ThreadWelcome: FC = () => {
   );
 };
 
+const ThreadWelcomeActions: FC = () => {
+  return (
+    <div className="mt-8 flex gap-4">
+      <Button variant="outline" className="flex items-center gap-2">
+        <span>✨</span>
+        Create
+      </Button>
+      <Button variant="outline" className="flex items-center gap-2">
+        <span>🔍</span>
+        Explore
+      </Button>
+      <Button variant="outline" className="flex items-center gap-2">
+        <span>💻</span>
+        Code
+      </Button>
+      <Button variant="outline" className="flex items-center gap-2">
+        <span>🎓</span>
+        Learn
+      </Button>
+    </div>
+  );
+};
+
 const ThreadWelcomeSuggestions: FC = () => {
   return (
-    <div className="mt-3 flex w-full items-stretch justify-center gap-4">
+    <div className="mt-8 flex w-full flex-col items-center gap-3">
       <ThreadPrimitive.Suggestion
-        className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
-        prompt="What is the weather in Tokyo?"
+        className="hover:bg-muted/80 text-left rounded-lg border p-3 transition-colors ease-in cursor-pointer"
+        prompt="How does AI work?"
         method="replace"
         autoSend
       >
-        <span className="line-clamp-2 text-ellipsis text-sm font-semibold">
-          What is the weather in Tokyo?
-        </span>
+        <span className="text-sm">How does AI work?</span>
       </ThreadPrimitive.Suggestion>
       <ThreadPrimitive.Suggestion
-        className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
-        prompt="What is assistant-ui?"
+        className="hover:bg-muted/80 text-left rounded-lg border p-3 transition-colors ease-in cursor-pointer"
+        prompt="Are black holes real?"
         method="replace"
         autoSend
       >
-        <span className="line-clamp-2 text-ellipsis text-sm font-semibold">
-          What is assistant-ui?
-        </span>
+        <span className="text-sm">Are black holes real?</span>
+      </ThreadPrimitive.Suggestion>
+      <ThreadPrimitive.Suggestion
+        className="hover:bg-muted/80 text-left rounded-lg border p-3 transition-colors ease-in cursor-pointer"
+        prompt={'How many Rs are in the word "strawberry"?'}
+        method="replace"
+        autoSend
+      >
+        <span className="text-sm">How many Rs are in the word &quot;strawberry&quot;?</span>
+      </ThreadPrimitive.Suggestion>
+      <ThreadPrimitive.Suggestion
+        className="hover:bg-muted/80 text-left rounded-lg border p-3 transition-colors ease-in cursor-pointer"
+        prompt="What is the meaning of life?"
+        method="replace"
+        autoSend
+      >
+        <span className="text-sm">What is the meaning of life?</span>
       </ThreadPrimitive.Suggestion>
     </div>
   );
@@ -111,14 +150,30 @@ const ThreadWelcomeSuggestions: FC = () => {
 
 const Composer: FC = () => {
   return (
-    <ComposerPrimitive.Root className="focus-within:border-ring/20 flex w-full flex-wrap items-end rounded-lg border bg-inherit px-2.5 shadow-sm transition-colors ease-in">
-      <ComposerPrimitive.Input
-        rows={1}
-        autoFocus
-        placeholder="Write a message..."
-        className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
-      />
-      <ComposerAction />
+    <ComposerPrimitive.Root className="focus-within:border-ring/20 flex w-full flex-col rounded-lg border bg-inherit shadow-sm transition-colors ease-in">
+      <div className="flex items-center px-4 py-3">
+        <ComposerPrimitive.Input
+          rows={1}
+          autoFocus
+          placeholder="Type your message here..."
+          className="placeholder:text-muted-foreground flex-grow resize-none border-none bg-transparent text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
+        />
+        <div className="flex items-center gap-2 ml-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <SearchIcon className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <PaperclipIcon className="h-4 w-4" />
+          </Button>
+          <ComposerAction />
+        </div>
+      </div>
+      <div className="flex items-center justify-between px-4 py-2 border-t">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Gemini 2.5 Flash</span>
+          <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </div>
     </ComposerPrimitive.Root>
   );
 };
@@ -128,24 +183,22 @@ const ComposerAction: FC = () => {
     <>
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
-          <TooltipIconButton
-            tooltip="Send"
-            variant="default"
-            className="my-2.5 size-8 p-2 transition-opacity ease-in"
+          <Button
+            size="icon"
+            className="h-8 w-8 rounded-full bg-pink-500 hover:bg-pink-600 text-white"
           >
-            <SendHorizontalIcon />
-          </TooltipIconButton>
+            <SendHorizontalIcon className="h-4 w-4" />
+          </Button>
         </ComposerPrimitive.Send>
       </ThreadPrimitive.If>
       <ThreadPrimitive.If running>
         <ComposerPrimitive.Cancel asChild>
-          <TooltipIconButton
-            tooltip="Cancel"
-            variant="default"
-            className="my-2.5 size-8 p-2 transition-opacity ease-in"
+          <Button
+            size="icon"
+            className="h-8 w-8 rounded-full bg-pink-500 hover:bg-pink-600 text-white"
           >
             <CircleStopIcon />
-          </TooltipIconButton>
+          </Button>
         </ComposerPrimitive.Cancel>
       </ThreadPrimitive.If>
     </>
@@ -281,6 +334,7 @@ const CircleStopIcon = () => {
       width="16"
       height="16"
     >
+      <title>Stop</title>
       <rect width="10" height="10" x="3" y="3" rx="2" />
     </svg>
   );
