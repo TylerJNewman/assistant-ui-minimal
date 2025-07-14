@@ -58,25 +58,35 @@ export const ThreadList: FC = () => {
       {isError && <div className="text-destructive px-3 py-2">Failed to load threads.</div>}
       {threads.length === 0 && !isLoading && <div className="text-muted-foreground px-3 py-2">No threads yet.</div>}
       {threads.map((thread) => (
-        <button
+        <div
           key={thread.id}
-          type="button"
+          role="button"
+          tabIndex={0}
           className={cn(
-            "flex items-center gap-2 rounded-lg px-3 py-2 text-start hover:bg-muted",
+            "flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-start hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring",
             thread.id === currentThreadId && "bg-muted",
           )}
           onClick={() => setCurrentThreadId(thread.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setCurrentThreadId(thread.id);
+            }
+          }}
         >
           <span className="truncate text-sm flex-grow">{thread.title || "New Chat"}</span>
           <TooltipIconButton
             className="hover:text-primary text-foreground ml-auto mr-3 size-4 p-0"
             variant="ghost"
             tooltip="Archive thread"
-            // TODO: Add archive mutation
+            onClick={(e) => {
+              e.stopPropagation();
+              // TODO: Add archive mutation
+            }}
           >
             <ArchiveIcon />
           </TooltipIconButton>
-        </button>
+        </div>
       ))}
     </div>
   );

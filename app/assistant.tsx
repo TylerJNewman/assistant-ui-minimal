@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { useCurrentThread } from "@/hooks/use-current-thread";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import type { Message } from "ai";
 
 const fetchThreads = async () => {
   const res = await fetch("/api/threads");
@@ -15,11 +16,17 @@ const fetchThreads = async () => {
   return res.json();
 };
 
+const fetchMessages = async (threadId: string) => {
+  const res = await fetch(`/api/threads/${threadId}/messages`);
+  if (!res.ok) throw new Error("Failed to fetch messages");
+  return res.json();
+};
+
 export const Assistant = () => {
   const { currentThreadId, setCurrentThreadId } = useCurrentThread();
 
   // On first load, select the most recent thread
-  const { data: threads } = useQuery({
+  const { data: threads, isLoading: areThreadsLoading } = useQuery({
     queryKey: ["threads"],
     queryFn: fetchThreads,
   });
@@ -30,20 +37,38 @@ export const Assistant = () => {
     }
   }, [threads, currentThreadId, setCurrentThreadId]);
 
-  const runtime = useChatRuntime({
-    api: "/api/chat",
+  const { data: messages, isLoading: areMessagesLoading } = useQuery<Message[]>({
+    queryKey: ["messages", currentThreadId],
+    queryFn: () => fetchMessages(currentThreadId ?? ""),
+    enabled: !!currentThreadId,
   });
 
-  if (!currentThreadId) {
+  const runtime = useChatRuntime({
+    api: "/api/chat",
+    initialMessages: messages
+      ?.filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({ ...m, role: m.role as "user" | "assistant" })),
+  });
+
+  if (areThreadsLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">Loading threads...</div>
+      </div>
+    );
+  }
+
+  // if we have a thread, but messages are loading, show loading
+  if (currentThreadId && areMessagesLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-muted-foreground">Loading messages...</div>
       </div>
     );
   }
 
   return (
-    <AssistantRuntimeProvider key={currentThreadId} runtime={runtime}>
+    <AssistantRuntimeProvider key={currentThreadId ?? 'empty'} runtime={runtime}>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>

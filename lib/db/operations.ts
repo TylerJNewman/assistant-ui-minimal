@@ -59,6 +59,10 @@ export class ThreadRepository {
     await db.delete(threads).where(eq(threads.id, id));
   }
 
+  async deleteAllThreads(): Promise<void> {
+    await db.delete(threads);
+  }
+
   // Message operations
   async createMessage(data: Omit<NewMessage, 'id'>): Promise<Message> {
     const message = {
