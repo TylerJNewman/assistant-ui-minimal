@@ -5,6 +5,7 @@ import "./globals.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
+import { CurrentThreadProvider } from "@/hooks/use-current-thread";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,8 +30,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryClientProvider client={queryClient}>
-          {children}
-          <ReactQueryDevtools initialIsOpen={false} />
+          <CurrentThreadProvider>
+            {children}
+            <ReactQueryDevtools initialIsOpen={false} />
+          </CurrentThreadProvider>
         </QueryClientProvider>
       </body>
     </html>

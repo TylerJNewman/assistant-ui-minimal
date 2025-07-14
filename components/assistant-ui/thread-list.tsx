@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
+import { useCurrentThread } from "@/hooks/use-current-thread";
+import { cn } from "@/lib/utils";
 
 interface Thread {
   id: string;
-  title: string;
+  title: string | null;
   status: string;
 }
 
@@ -26,13 +28,19 @@ const createThread = async (): Promise<Thread> => {
 
 export const ThreadList: FC = () => {
   const queryClient = useQueryClient();
+  const { currentThreadId, setCurrentThreadId } = useCurrentThread();
+
   const { data: threads = [], isLoading, isError } = useQuery<Thread[]>({
     queryKey: ["threads"],
     queryFn: fetchThreads,
   });
+
   const newThreadMutation = useMutation({
     mutationFn: createThread,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["threads"] }),
+    onSuccess: (newThread) => {
+      queryClient.invalidateQueries({ queryKey: ["threads"] });
+      setCurrentThreadId(newThread.id);
+    },
   });
 
   return (
@@ -50,7 +58,15 @@ export const ThreadList: FC = () => {
       {isError && <div className="text-destructive px-3 py-2">Failed to load threads.</div>}
       {threads.length === 0 && !isLoading && <div className="text-muted-foreground px-3 py-2">No threads yet.</div>}
       {threads.map((thread) => (
-        <div key={thread.id} className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted">
+        <button
+          key={thread.id}
+          type="button"
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-3 py-2 text-start hover:bg-muted",
+            thread.id === currentThreadId && "bg-muted",
+          )}
+          onClick={() => setCurrentThreadId(thread.id)}
+        >
           <span className="truncate text-sm flex-grow">{thread.title || "New Chat"}</span>
           <TooltipIconButton
             className="hover:text-primary text-foreground ml-auto mr-3 size-4 p-0"
@@ -60,7 +76,7 @@ export const ThreadList: FC = () => {
           >
             <ArchiveIcon />
           </TooltipIconButton>
-        </div>
+        </button>
       ))}
     </div>
   );
