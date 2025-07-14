@@ -1,66 +1,67 @@
 import type { FC } from "react";
-import {
-  ThreadListItemPrimitive,
-  ThreadListPrimitive,
-} from "@assistant-ui/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon, PlusIcon } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 
+interface Thread {
+  id: string;
+  title: string;
+  status: string;
+}
+
+// Fetch threads from API
+const fetchThreads = async (): Promise<Thread[]> => {
+  const res = await fetch("/api/threads");
+  if (!res.ok) throw new Error("Failed to fetch threads");
+  return res.json();
+};
+
+// Create a new thread via API
+const createThread = async (): Promise<Thread> => {
+  const res = await fetch("/api/threads", { method: "POST" });
+  if (!res.ok) throw new Error("Failed to create thread");
+  return res.json();
+};
+
 export const ThreadList: FC = () => {
-  return (
-    <ThreadListPrimitive.Root className="flex flex-col items-stretch gap-1.5">
-      <ThreadListNew />
-      <ThreadListItems />
-    </ThreadListPrimitive.Root>
-  );
-};
+  const queryClient = useQueryClient();
+  const { data: threads = [], isLoading, isError } = useQuery<Thread[]>({
+    queryKey: ["threads"],
+    queryFn: fetchThreads,
+  });
+  const newThreadMutation = useMutation({
+    mutationFn: createThread,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["threads"] }),
+  });
 
-const ThreadListNew: FC = () => {
   return (
-    <ThreadListPrimitive.New asChild>
-      <Button className="data-[active]:bg-muted hover:bg-muted flex items-center justify-start gap-1 rounded-lg px-2.5 py-2 text-start" variant="ghost">
-        <PlusIcon />
-        New Thread
-      </Button>
-    </ThreadListPrimitive.New>
-  );
-};
-
-const ThreadListItems: FC = () => {
-  return <ThreadListPrimitive.Items components={{ ThreadListItem }} />;
-};
-
-const ThreadListItem: FC = () => {
-  return (
-    <ThreadListItemPrimitive.Root className="data-[active]:bg-muted hover:bg-muted focus-visible:bg-muted focus-visible:ring-ring flex items-center gap-2 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2">
-      <ThreadListItemPrimitive.Trigger className="flex-grow px-3 py-2 text-start">
-        <ThreadListItemTitle />
-      </ThreadListItemPrimitive.Trigger>
-      <ThreadListItemArchive />
-    </ThreadListItemPrimitive.Root>
-  );
-};
-
-const ThreadListItemTitle: FC = () => {
-  return (
-    <p className="text-sm truncate">
-      <ThreadListItemPrimitive.Title fallback="New Chat" />
-    </p>
-  );
-};
-
-const ThreadListItemArchive: FC = () => {
-  return (
-    <ThreadListItemPrimitive.Archive asChild>
-      <TooltipIconButton
-        className="hover:text-primary text-foreground ml-auto mr-3 size-4 p-0"
+    <div className="flex flex-col items-stretch gap-1.5">
+      <Button
+        className="data-[active]:bg-muted hover:bg-muted flex items-center justify-start gap-1 rounded-lg px-2.5 py-2 text-start mb-2"
         variant="ghost"
-        tooltip="Archive thread"
+        onClick={() => newThreadMutation.mutate()}
+        disabled={newThreadMutation.isPending}
       >
-        <ArchiveIcon />
-      </TooltipIconButton>
-    </ThreadListItemPrimitive.Archive>
+        <PlusIcon />
+        {newThreadMutation.isPending ? "Creating..." : "New Thread"}
+      </Button>
+      {isLoading && <div className="text-muted-foreground px-3 py-2">Loading threads...</div>}
+      {isError && <div className="text-destructive px-3 py-2">Failed to load threads.</div>}
+      {threads.length === 0 && !isLoading && <div className="text-muted-foreground px-3 py-2">No threads yet.</div>}
+      {threads.map((thread) => (
+        <div key={thread.id} className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted">
+          <span className="truncate text-sm flex-grow">{thread.title || "New Chat"}</span>
+          <TooltipIconButton
+            className="hover:text-primary text-foreground ml-auto mr-3 size-4 p-0"
+            variant="ghost"
+            tooltip="Archive thread"
+            // TODO: Add archive mutation
+          >
+            <ArchiveIcon />
+          </TooltipIconButton>
+        </div>
+      ))}
+    </div>
   );
 };
